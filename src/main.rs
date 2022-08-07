@@ -10,8 +10,24 @@ use vec3::Point3;
 use vec3::Vec3;
 use vec3::Color;
 
-// blue-to-white gradient depending on ray Y coordinate
+// t^2 * b^2 + 2 * t * b * (A - C) + (A - C)^2 - r ^ 2 = 0
+// where t is the time
+// b is the direction of the ray
+// A is the origin of the ray
+// r is radius of the sphere
+// when t has 1 or 2 roots, then it means the ray hits the sphere
+fn hit_sphere(center: &Point3, radius: f32, r: &Ray) -> bool {
+    let a_sub_c = r.origin - *center;
+    let a = r.direction.dot(r.direction);
+    let b = 2.0 * r.direction.dot(a_sub_c);
+    let c = a_sub_c.dot(a_sub_c) - radius * radius;
+    b * b - 4.0 * a * c > 0.0
+}
+
 fn ray_color(r: &Ray) -> Color {
+    if hit_sphere(&Point3 { x: 0.0, y: 0.0, z: -1.0 }, 0.5, r) {
+        return Color {x: 1.0, y: 0.0, z: 0.0}
+    }
     let unit_direction = r.direction.unit_vector();
     let t = 0.5 * (unit_direction.y + 1.0);
     (1.0 - t) * Color {x: 1.0, y: 1.0, z: 1.0} + t * Color {x: 0.5, y: 0.7, z: 1.0}
