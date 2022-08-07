@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::prelude::*;
+use std::io::Write;
 
 mod vec3;
 mod color_utils;
@@ -51,9 +51,9 @@ fn main() -> std::io::Result<()> {
     let lower_left_corner: Vec3 = origin - horizontal / 2.0 - vertical / 2.0 - Vec3 { x: 0.0, y: 0.0, z: focal_length };
 
     // render
-    let mut buffer = File::create("image.ppm")?;
+    let mut buffer = String::new();
 
-    write!(buffer, "P3\n{} {}\n255\n", image_width, image_height)?;
+    buffer.push_str(&format!("P3\n{} {}\n255\n", image_width, image_height));
 
     for j in (0..image_height).rev() {
         // println!("Scanlines remaining: {}", j);
@@ -63,9 +63,12 @@ fn main() -> std::io::Result<()> {
             let r = Ray {origin: origin, direction: lower_left_corner + u * horizontal + v * vertical - origin};
             let pixel_color = ray_color(&r);
 
-            color_utils::write_color(&buffer, &pixel_color)?;
+            color_utils::write_color(&mut buffer, &pixel_color);
         }
     }
+
+    let mut output = File::create("image.ppm")?;
+    output.write(buffer.as_bytes())?;
 
     Ok(())
 }
