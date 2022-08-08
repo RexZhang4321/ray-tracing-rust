@@ -11,6 +11,10 @@ pub type Color = Vec3;
 pub type Point3 = Vec3;
 
 impl Vec3 {
+    pub fn new_empty() -> Vec3 {
+        Vec3 {x: 0.0, y: 0.0, z: 0.0}
+    }
+
     pub fn new(e1: f32, e2: f32, e3: f32) -> Vec3 {
         Vec3 {x: e1, y: e2, z: e3}
     }
@@ -83,6 +87,14 @@ impl ops::SubAssign<Vec3> for Vec3 {
         self.y -= rhs.y;
         self.z -= rhs.z;
     }
+}
+
+impl ops::Neg for &Vec3 {
+    fn neg(self) -> Self::Output {
+        Vec3 {x: -self.x, y: -self.y, z: -self.z}
+    }
+
+    type Output = Vec3;
 }
 
 impl ops::Mul<Vec3> for Vec3 {
