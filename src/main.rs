@@ -4,6 +4,7 @@ use std::io::Write;
 mod vec3;
 mod color_utils;
 mod ray;
+mod hittable;
 
 use ray::Ray;
 use vec3::Point3;
@@ -16,17 +17,28 @@ use vec3::Color;
 // A is the origin of the ray
 // r is radius of the sphere
 // when t has 1 or 2 roots, then it means the ray hits the sphere
-fn hit_sphere(center: &Point3, radius: f32, r: &Ray) -> bool {
+// the formula to solve this equation is generally (-b +- sqrt(b^2 - 4ac)) / (2a)
+// subtitute b with 2h
+// we can get (-h +- sqrt(h^2 - ac)) / a
+fn hit_sphere(center: &Point3, radius: f32, r: &Ray) -> f32 {
     let a_sub_c = r.origin - *center;
     let a = r.direction.dot(r.direction);
-    let b = 2.0 * r.direction.dot(a_sub_c);
-    let c = a_sub_c.dot(a_sub_c) - radius * radius;
-    b * b - 4.0 * a * c > 0.0
+    let half_b = r.direction.dot(a_sub_c);
+    let c = a_sub_c.length_squared() - radius * radius;
+    let discriminant = half_b * half_b - a * c;
+    if discriminant < 0.0 {
+        return -1.0;
+    } else {
+        return (-half_b - discriminant.sqrt()) / a;
+    }
 }
 
 fn ray_color(r: &Ray) -> Color {
-    if hit_sphere(&Point3 { x: 0.0, y: 0.0, z: -1.0 }, 0.5, r) {
-        return Color {x: 1.0, y: 0.0, z: 0.0}
+    let center = Point3 { x: 0.0, y: 0.0, z: -1.0 };
+    let t_hit = hit_sphere(&center, 0.5, r);
+    if t_hit > 0.0 {
+        let normal = (r.at(t_hit) - center).unit_vector();
+        return 0.5 * Color {x: normal.x + 1.0, y: normal.y + 1.0, z: normal.z + 1.0};
     }
     let unit_direction = r.direction.unit_vector();
     let t = 0.5 * (unit_direction.y + 1.0);
