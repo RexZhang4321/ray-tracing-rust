@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::Write;
 use std::rc::Rc;
+use rand;
 
 mod vec3;
 mod color_utils;
@@ -8,14 +9,17 @@ mod ray;
 mod hittable;
 mod hittable_list;
 mod sphere;
+mod camera;
 
 use hittable::Hittable;
 use hittable_list::HittableList;
+use rand::Rng;
 use ray::Ray;
 use vec3::Point3;
 use vec3::Vec3;
 use vec3::Color;
 use sphere::Sphere;
+use camera::Camera;
 
 fn ray_color(r: &Ray, hittable: &impl Hittable) -> Color {
     match hittable.hit(r, 0.0, f32::MAX) {
@@ -35,6 +39,7 @@ fn main() -> std::io::Result<()> {
     let aspect_ratio: f32 = 16.0 / 9.0;
     let image_width: i32 = 400;
     let image_height: i32 = (image_width as f32 / aspect_ratio) as i32;
+    let samples_per_pixel: i32 = 100;
 
     // world
     let mut world = HittableList { objects: Vec::new() };
@@ -42,29 +47,26 @@ fn main() -> std::io::Result<()> {
     world.add(Rc::new(Sphere { center: Point3 {x: 0.0, y: -100.5, z: -1.0}, radius: 100.0 }));
 
     // camera
-    let viewport_height: f32 = 2.0;
-    let viewport_width: f32 = aspect_ratio * viewport_height;
-    let focal_length: f32 = 1.0;
-
-    let origin: Point3 = Point3 {x: 0.0, y: 0.0, z: 0.0};
-    let horizontal: Vec3 = Vec3 { x: viewport_width, y: 0.0, z: 0.0 };
-    let vertical: Vec3 = Vec3 { x: 0.0, y: viewport_height, z: 0.0 };
-    let lower_left_corner: Vec3 = origin - horizontal / 2.0 - vertical / 2.0 - Vec3 { x: 0.0, y: 0.0, z: focal_length };
+    let camera = Camera::new();
 
     // render
     let mut buffer = String::new();
+    let mut rng = rand::thread_rng();
 
     buffer.push_str(&format!("P3\n{} {}\n255\n", image_width, image_height));
 
     for j in (0..image_height).rev() {
         // println!("Scanlines remaining: {}", j);
         for i in 0..image_width {
-            let u = i as f32 / (image_width - 1) as f32;
-            let v = j as f32 / (image_height - 1) as f32;
-            let r = Ray {origin: origin, direction: lower_left_corner + u * horizontal + v * vertical - origin};
-            let pixel_color = ray_color(&r, &world);
+            let mut pixel_color = Color::new_empty();
+            for _ in 0..samples_per_pixel {
+                let u = (i as f32 + rng.gen::<f32>()) / (image_width - 1) as f32;
+                let v = (j as f32 + rng.gen::<f32>()) / (image_height - 1) as f32;
+                let r = camera.get_ray(u, v);
+                pixel_color += ray_color(&r, &world);
+            }
 
-            color_utils::write_color(&mut buffer, &pixel_color);
+            color_utils::write_color(&mut buffer, &pixel_color, samples_per_pixel);
         }
     }
 
