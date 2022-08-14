@@ -1,5 +1,7 @@
 use std::ops;
 
+use rand::Rng;
+
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub struct Vec3 {
     pub x: f32,
@@ -38,6 +40,29 @@ impl Vec3 {
 
     pub fn unit_vector(self: Vec3) -> Vec3 {
         self / self.length()
+    }
+
+    pub fn random() -> Vec3 {
+        Vec3 { x: rand::random::<f32>(), y: rand::random::<f32>(), z: rand::random::<f32>() }
+    }
+
+    pub fn random_range(min: f32, max: f32) -> Vec3 {
+        let mut rng = rand::thread_rng();
+        Vec3 { x: rng.gen_range(min..max), y: rng.gen_range(min..max), z: rng.gen_range(min..max) }
+    }
+
+    pub fn random_in_unit_sphere() -> Vec3 {
+        loop {
+            let p = Vec3::random();
+            if p.length_squared() >= 1.0 {
+                continue;
+            }
+            return p;
+        }
+    }
+
+    pub fn random_unit_vector() -> Vec3 {
+        Vec3::random_in_unit_sphere().unit_vector()
     }
 }
 

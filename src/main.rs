@@ -21,10 +21,22 @@ use vec3::Color;
 use sphere::Sphere;
 use camera::Camera;
 
-fn ray_color(r: &Ray, hittable: &impl Hittable) -> Color {
-    match hittable.hit(r, 0.0, f32::MAX) {
+fn ray_color(r: &Ray, hittable: &impl Hittable, depth: i32) -> Color {
+
+    // if we've exceeded the ray bouncing limit, we will not gather more light
+    if depth <= 0 {
+        return Color {x: 1.0, y: 1.0, z: 1.0};
+    }
+
+    // some of the reflected rays hit the object they are reflecting off of not at exactly t = 0,
+    // but something extremely close to 0 (shadow acne problem)
+    match hittable.hit(r, 0.001, f32::MAX) {
         Some(rec) => {
-            return 0.5 * Color {x: rec.normal.x + 1.0, y: rec.normal.y + 1.0, z: rec.normal.z + 1.0};
+            // using Vec3::random_unit_vector() will provide a more uniformed distribution of the reflected rays
+            // where Vec3::random_in_unit_sphere() will produce more rays that are close to the normal
+            // this will make the object lighter and less shadow
+            let target = rec.p + rec.normal + Vec3::random_unit_vector();
+            return 0.5 * ray_color(&Ray { origin: rec.p, direction: target - rec.p }, hittable, depth - 1);
         },
         None => (),
     }
@@ -40,6 +52,7 @@ fn main() -> std::io::Result<()> {
     let image_width: i32 = 400;
     let image_height: i32 = (image_width as f32 / aspect_ratio) as i32;
     let samples_per_pixel: i32 = 100;
+    let max_depth: i32 = 50;
 
     // world
     let mut world = HittableList { objects: Vec::new() };
@@ -56,14 +69,14 @@ fn main() -> std::io::Result<()> {
     buffer.push_str(&format!("P3\n{} {}\n255\n", image_width, image_height));
 
     for j in (0..image_height).rev() {
-        // println!("Scanlines remaining: {}", j);
+        println!("Scanlines remaining: {}", j);
         for i in 0..image_width {
             let mut pixel_color = Color::new_empty();
             for _ in 0..samples_per_pixel {
                 let u = (i as f32 + rng.gen::<f32>()) / (image_width - 1) as f32;
                 let v = (j as f32 + rng.gen::<f32>()) / (image_height - 1) as f32;
                 let r = camera.get_ray(u, v);
-                pixel_color += ray_color(&r, &world);
+                pixel_color += ray_color(&r, &world, max_depth);
             }
 
             color_utils::write_color(&mut buffer, &pixel_color, samples_per_pixel);
