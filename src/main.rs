@@ -75,12 +75,18 @@ fn main() -> std::io::Result<()> {
 
 
     // camera
+    let look_from = Point3::new(3.0, 3.0, 2.0);
+    let look_to = Point3::new(0.0, 0.0, -1.0);
+
     let camera = Camera::new(
-        Point3::new(-2.0, 2.0, 1.0),
-        Point3::new(0.0, 0.0, -1.0),
+        look_from,
+        look_to,
         Vec3::new(0.0, 1.0, 0.0),
         20.0,
-        aspect_ratio);
+        aspect_ratio,
+        1.0,
+        (look_from - look_to).length()
+    );
 
     // render
     let mut buffer = String::new();
