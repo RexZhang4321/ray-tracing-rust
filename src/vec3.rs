@@ -74,6 +74,13 @@ impl Vec3 {
     pub fn reflect(in_direction: &Vec3, normal: &Vec3) -> Vec3 {
         in_direction - &(2.0 * in_direction.dot(*normal) * normal)
     }
+
+    pub fn refract(in_direction: &Vec3, normal: &Vec3, etai_over_etat: f32) -> Vec3 {
+        let cos_theta = (-in_direction.dot(*normal)).min(1.0);
+        let r_out_prep = etai_over_etat * (in_direction + &(cos_theta * *normal));
+        let r_out_parallel = -(1.0 - r_out_prep.length_squared()).abs().sqrt() * normal;
+        r_out_prep + r_out_parallel
+    }
 }
 
 impl Default for Vec3 {
@@ -202,6 +209,16 @@ impl ops::DivAssign<f32> for Vec3 {
         self.x /= rhs;
         self.y /= rhs;
         self.z /= rhs;
+    }
+}
+
+impl Color {
+    pub fn black() -> Color {
+        Color {x: 1.0, y: 1.0, z: 1.0}
+    }
+
+    pub fn white() -> Color {
+        Color {x: 0.0, y: 0.0, z: 0.0}
     }
 }
 

@@ -27,7 +27,7 @@ fn ray_color(r: &Ray, hittable: &impl Hittable, depth: i32) -> Color {
 
     // if we've exceeded the ray bouncing limit, we will not gather more light
     if depth <= 0 {
-        return Color {x: 1.0, y: 1.0, z: 1.0};
+        return Color::black();
     }
 
     // some of the reflected rays hit the object they are reflecting off of not at exactly t = 0,
@@ -38,14 +38,14 @@ fn ray_color(r: &Ray, hittable: &impl Hittable, depth: i32) -> Color {
                 Some((attenuation, scattered)) => {
                     return attenuation * ray_color(&scattered, hittable, depth - 1);
                 },
-                None => return Color::new_empty()
+                None => return Color::white()
             }
         },
         None => (),
     }
     let unit_direction = r.direction.unit_vector();
     let t = 0.5 * (unit_direction.y + 1.0);
-    (1.0 - t) * Color {x: 1.0, y: 1.0, z: 1.0} + t * Color {x: 0.5, y: 0.7, z: 1.0}
+    (1.0 - t) * Color::black() + t * Color {x: 0.5, y: 0.7, z: 1.0}
 }
 
 fn main() -> std::io::Result<()> {
@@ -61,13 +61,16 @@ fn main() -> std::io::Result<()> {
     let mut world = HittableList { objects: Vec::new() };
 
     let material_ground = Rc::new(Lambertian {albedo: Color::new(0.8, 0.8, 0.0)});
-    let material_center = Rc::new(Lambertian {albedo: Color::new(0.7, 0.3, 0.3)});
-    let material_left = Rc::new(Metal {albedo: Color::new(0.8, 0.8, 0.8), fuzz: 0.3});
+    let material_center = Rc::new(Lambertian {albedo: Color::new(0.1, 0.2, 0.5)});
+    // let material_left = Rc::new(Metal {albedo: Color::new(0.8, 0.8, 0.8), fuzz: 0.3});
+    //let material_center = Rc::new(Dielectric {ir: 1.5});
+    let material_left = Rc::new(Dielectric {ir: 1.5});
     let material_right = Rc::new(Metal {albedo: Color::new(0.8, 0.6, 0.2), fuzz: 1.0});
 
     world.add(Rc::new(Sphere { center: Point3 {x: 0.0, y: -100.5, z: -1.0}, radius: 100.0, material: material_ground }));
     world.add(Rc::new(Sphere { center: Point3 {x: 0.0, y: 0.0, z: -1.0}, radius: 0.5, material: material_center}));
-    world.add(Rc::new(Sphere { center: Point3 {x: -1.0, y: 0.0, z: -1.0}, radius: 0.5, material: material_left}));
+    world.add(Rc::new(Sphere { center: Point3 {x: -1.0, y: 0.0, z: -1.0}, radius: 0.5, material: Rc::clone(&material_left) as Rc<dyn Material>}));
+    world.add(Rc::new(Sphere { center: Point3 {x: -1.0, y: 0.0, z: -1.0}, radius: -0.4, material: Rc::clone(&material_left) as Rc<dyn Material>}));
     world.add(Rc::new(Sphere { center: Point3 {x: 1.0, y: 0.0, z: -1.0}, radius: 0.5, material: material_right}));
 
 
