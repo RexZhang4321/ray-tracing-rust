@@ -1,3 +1,6 @@
+use std::rc::Rc;
+
+use crate::material::Material;
 use crate::vec3::Point3;
 use crate::vec3::Vec3;
 use crate::ray::Ray;
@@ -6,12 +9,13 @@ pub struct HitRecord {
     pub p: Point3,
     pub normal: Vec3,
     pub t: f32,
-    pub front_face: bool
+    pub front_face: bool,
+    pub material: Rc<dyn Material>
 }
 
 impl HitRecord {
-    pub fn new(p: &Point3, t: f32) -> HitRecord {
-        HitRecord { p: *p, normal: Vec3::new_empty(), t: t, front_face: false }
+    pub fn new(p: &Point3, t: f32, material: Rc<dyn Material>) -> HitRecord {
+        HitRecord { p: *p, normal: Vec3::new_empty(), t: t, front_face: false, material: material }
     }
 
     // set the "normal" vector to be always pointing to the opposite direction of the ray

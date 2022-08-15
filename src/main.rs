@@ -10,6 +10,7 @@ mod hittable;
 mod hittable_list;
 mod sphere;
 mod camera;
+mod material;
 
 use hittable::Hittable;
 use hittable_list::HittableList;
@@ -20,6 +21,7 @@ use vec3::Vec3;
 use vec3::Color;
 use sphere::Sphere;
 use camera::Camera;
+use material::*;
 
 fn ray_color(r: &Ray, hittable: &impl Hittable, depth: i32) -> Color {
 
@@ -32,11 +34,12 @@ fn ray_color(r: &Ray, hittable: &impl Hittable, depth: i32) -> Color {
     // but something extremely close to 0 (shadow acne problem)
     match hittable.hit(r, 0.001, f32::MAX) {
         Some(rec) => {
-            // using Vec3::random_unit_vector() will provide a more uniformed distribution of the reflected rays
-            // where Vec3::random_in_unit_sphere() will produce more rays that are close to the normal
-            // this will make the object lighter and less shadow
-            let target = rec.p + rec.normal + Vec3::random_unit_vector();
-            return 0.5 * ray_color(&Ray { origin: rec.p, direction: target - rec.p }, hittable, depth - 1);
+            match rec.material.scatter(r, &rec) {
+                Some((attenuation, scattered)) => {
+                    return attenuation * ray_color(&scattered, hittable, depth - 1);
+                },
+                None => return Color::new_empty()
+            }
         },
         None => (),
     }
@@ -56,8 +59,17 @@ fn main() -> std::io::Result<()> {
 
     // world
     let mut world = HittableList { objects: Vec::new() };
-    world.add(Rc::new(Sphere { center: Point3 {x: 0.0, y: 0.0, z: -1.0}, radius: 0.5 }));
-    world.add(Rc::new(Sphere { center: Point3 {x: 0.0, y: -100.5, z: -1.0}, radius: 100.0 }));
+
+    let material_ground = Rc::new(Lambertian {albedo: Color::new(0.8, 0.8, 0.0)});
+    let material_center = Rc::new(Lambertian {albedo: Color::new(0.7, 0.3, 0.3)});
+    let material_left = Rc::new(Metal {albedo: Color::new(0.8, 0.8, 0.8), fuzz: 0.3});
+    let material_right = Rc::new(Metal {albedo: Color::new(0.8, 0.6, 0.2), fuzz: 1.0});
+
+    world.add(Rc::new(Sphere { center: Point3 {x: 0.0, y: -100.5, z: -1.0}, radius: 100.0, material: material_ground }));
+    world.add(Rc::new(Sphere { center: Point3 {x: 0.0, y: 0.0, z: -1.0}, radius: 0.5, material: material_center}));
+    world.add(Rc::new(Sphere { center: Point3 {x: -1.0, y: 0.0, z: -1.0}, radius: 0.5, material: material_left}));
+    world.add(Rc::new(Sphere { center: Point3 {x: 1.0, y: 0.0, z: -1.0}, radius: 0.5, material: material_right}));
+
 
     // camera
     let camera = Camera::new();

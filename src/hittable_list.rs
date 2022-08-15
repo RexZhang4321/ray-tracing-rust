@@ -3,17 +3,17 @@ use std::rc::Rc;
 use crate::hittable::*;
 use crate::ray::Ray;
 
-pub struct HittableList<T: Hittable> {
-    pub objects: Vec<Rc<T>>
+pub struct HittableList {
+    pub objects: Vec<Rc<dyn Hittable>>
 }
 
-impl<T: Hittable> HittableList<T> {
-    pub fn add(&mut self, object: Rc<T>) {
+impl HittableList {
+    pub fn add(&mut self, object: Rc<dyn Hittable>) {
         self.objects.push(object);
     }
 }
 
-impl<T: Hittable> Hittable for HittableList<T> {
+impl Hittable for HittableList {
 
     // TODO: this is probably an incorrect implementation because only the last hit object info is preserved
     fn hit(&self, r: &Ray, t_min: f32, t_max: f32) -> Option<HitRecord> {

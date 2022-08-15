@@ -64,6 +64,16 @@ impl Vec3 {
     pub fn random_unit_vector() -> Vec3 {
         Vec3::random_in_unit_sphere().unit_vector()
     }
+
+    // Return true if the vector is close to zero in all dimensions.
+    pub fn near_zero(&self) -> bool {
+        let s: f32 = 1e-8;
+        (self.x.abs() < s) && (self.y.abs() < s) && (self.z.abs() < s)
+    }
+
+    pub fn reflect(in_direction: &Vec3, normal: &Vec3) -> Vec3 {
+        in_direction - &(2.0 * in_direction.dot(*normal) * normal)
+    }
 }
 
 impl Default for Vec3 {
@@ -106,6 +116,15 @@ impl ops::Sub<Vec3> for Vec3 {
     }
 }
 
+// this is for &v1 + &v2
+impl<'a, 'b> ops::Sub<&'b Vec3> for &'a Vec3 {
+    type Output = Vec3;
+
+    fn sub(self, rhs: &'b Vec3) -> Self::Output {
+        Vec3 {x: self.x - rhs.x, y: self.y - rhs.y, z: self.z - rhs.z}
+    }
+}
+
 impl ops::SubAssign<Vec3> for Vec3 {
     fn sub_assign(&mut self, rhs: Vec3) {
         self.x -= rhs.x;
@@ -142,6 +161,22 @@ impl ops::Mul<Vec3> for f32 {
     type Output = Vec3;
 
     fn mul(self, rhs: Vec3) -> Self::Output {
+        Vec3 {x: self * rhs.x, y: self * rhs.y, z: self * rhs.z}
+    }
+}
+
+impl ops::Mul<f32> for &Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, rhs: f32) -> Self::Output {
+        Vec3 {x: self.x * rhs, y: self.y * rhs, z: self.z * rhs}
+    }
+}
+
+impl ops::Mul<&Vec3> for f32 {
+    type Output = Vec3;
+
+    fn mul(self, rhs: &Vec3) -> Self::Output {
         Vec3 {x: self * rhs.x, y: self * rhs.y, z: self * rhs.z}
     }
 }
