@@ -65,7 +65,7 @@ fn main() -> std::io::Result<()> {
     // let material_left = Rc::new(Metal {albedo: Color::new(0.8, 0.8, 0.8), fuzz: 0.3});
     //let material_center = Rc::new(Dielectric {ir: 1.5});
     let material_left = Rc::new(Dielectric {ir: 1.5});
-    let material_right = Rc::new(Metal {albedo: Color::new(0.8, 0.6, 0.2), fuzz: 1.0});
+    let material_right = Rc::new(Metal {albedo: Color::new(0.8, 0.6, 0.2), fuzz: 0.0});
 
     world.add(Rc::new(Sphere { center: Point3 {x: 0.0, y: -100.5, z: -1.0}, radius: 100.0, material: material_ground }));
     world.add(Rc::new(Sphere { center: Point3 {x: 0.0, y: 0.0, z: -1.0}, radius: 0.5, material: material_center}));
@@ -75,7 +75,12 @@ fn main() -> std::io::Result<()> {
 
 
     // camera
-    let camera = Camera::new();
+    let camera = Camera::new(
+        Point3::new(-2.0, 2.0, 1.0),
+        Point3::new(0.0, 0.0, -1.0),
+        Vec3::new(0.0, 1.0, 0.0),
+        20.0,
+        aspect_ratio);
 
     // render
     let mut buffer = String::new();

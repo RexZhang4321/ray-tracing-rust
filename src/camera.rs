@@ -9,16 +9,22 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new() -> Camera {
-        let aspect_ratio = 16.0 / 9.0;
-        let viewport_height: f32 = 2.0;
+    // vup -> view up vector, or the direction of the "up view", think of rotating the head around the nose axle
+    // (0, 1, 0) means look from horizontal, up from the gravity
+    pub fn new(look_from: Point3, look_at: Point3, vup: Vec3, vfov: f32, aspect_ratio: f32) -> Camera {
+        let theta = vfov.to_radians();
+        let h = (theta / 2.0).tan();
+        let viewport_height: f32 = 2.0 * h;
         let viewport_width: f32 = aspect_ratio * viewport_height;
-        let focal_length: f32 = 1.0;
+
+        let w = (look_from - look_at).unit_vector();
+        let u = vup.cross(w).unit_vector();
+        let v = w.cross(u);
     
-        let origin: Point3 = Point3 {x: 0.0, y: 0.0, z: 0.0};
-        let horizontal: Vec3 = Vec3 { x: viewport_width, y: 0.0, z: 0.0 };
-        let vertical: Vec3 = Vec3 { x: 0.0, y: viewport_height, z: 0.0 };
-        let lower_left_corner: Vec3 = origin - horizontal / 2.0 - vertical / 2.0 - Vec3 { x: 0.0, y: 0.0, z: focal_length };    
+        let origin: Point3 = look_from;
+        let horizontal: Vec3 = viewport_width * u;
+        let vertical: Vec3 = viewport_height * v;
+        let lower_left_corner: Vec3 = origin - horizontal / 2.0 - vertical / 2.0 - w;
         Camera { origin: origin, lower_left_corner: lower_left_corner, horizontal: horizontal, vertical: vertical }
     }
 
